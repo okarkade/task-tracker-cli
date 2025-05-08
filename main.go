@@ -27,12 +27,12 @@ func main() {
 	if errors.Is(err, fs.ErrNotExist) {
 		err := os.Mkdir(storageDir, 0755)
 		check(err)
-		fmt.Println("Storage created at", storageDir, "\n")
-
 		err = os.Mkdir(storageDir + "tasks/", 0755)
 		check(err)
 		err = os.Mkdir(storageDir + "configs/", 0755)
 		check(err)
+
+		fmt.Println("Storage created at", storageDir, "\n")
 	}
 	// --------------------------
 
