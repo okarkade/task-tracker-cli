@@ -28,25 +28,23 @@ func main() {
 
 	switch arg {
 	case "create":
-		var createTask task
+		var task task
 
-		fmt.Print("Input name of the task: ")
-		createTask.Name = readStdIn()
+		task.Name = ask("Input name of the task")
+		task.Task = ask("Input description of the task")
+		task.CreatedAt = time.Now().Format(time.RFC1123)
 
-		fmt.Print("Input description of the task: ")
-		createTask.Task = readStdIn()
-
-		createTask.CreatedAt = time.Now().Format(time.RFC1123)
-
-		createJSON, err := json.Marshal(createTask)
+		JSON, err := json.Marshal(task)
 		check(err)
 
-		f, err := os.Create(storageDir + "tasks/" + createTask.Name + ".json")
+		f, err := os.Create(storageDir + "tasks/" + task.Name + ".json")
 		check(err)
 		defer f.Close()
 
-		_, err = f.Write(createJSON)
+		_, err = f.Write(JSON)
 		check(err)
+
+		fmt.Println("\nTask successfully created!")
 	default:
 		log.Fatal("unknown argument: " + arg)
 	}
@@ -56,6 +54,11 @@ type task struct {
 	Name      string `json:"name"`
 	Task      string `json:"task"`
 	CreatedAt string `json:"createdAt"`
+}
+
+func ask(prompt string) string {
+	fmt.Print(prompt + ": ")
+	return readStdIn()
 }
 
 func readStdIn() string {
@@ -75,7 +78,6 @@ func configureStorage() {
 	configureFolder(storageDir)
 	configureFolder(tasksDir)
 	configureFolder(configsDir)
-	fmt.Println()
 }
 
 func isExists(path string) bool {
@@ -91,7 +93,6 @@ func configureFolder(path string) {
 	if !isExists(path) {
 		err := os.Mkdir(path, 0755)
 		check(err)
-		fmt.Println(path, "created")
 	}
 }
 
