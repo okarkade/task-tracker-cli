@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"time"
 )
@@ -22,15 +23,10 @@ var (
 )
 
 func main() {
-	flag.Parse()
-	if len(flag.Args()) != 1 {
-		fmt.Println("invalid number of arguments")
-		return
-	}
-
+	arg := parseArg()
 	configureStorage()
 
-	switch flag.Arg(0) {
+	switch arg {
 	case "create":
 		var createTask task
 
@@ -52,7 +48,7 @@ func main() {
 		_, err = f.Write(createJSON)
 		check(err)
 	default:
-		panic("unknown argument: " + flag.Arg(0))
+		panic("unknown argument: " + arg)
 	}
 }
 
@@ -97,4 +93,12 @@ func configureFolder(path string) {
 		check(err)
 		fmt.Println(path, "created")
 	}
+}
+
+func parseArg() string {
+	flag.Parse()
+	if len(flag.Args()) != 1 {
+		log.Fatal("Invalid number of arguments")
+	}
+	return flag.Arg(0)
 }
