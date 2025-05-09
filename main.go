@@ -11,6 +11,16 @@ import (
 	"time"
 )
 
+// const doesn't allow to use functions for initialization so use var
+var (
+	homeDir, _ = os.UserHomeDir()
+
+	// slashes on the end for the easier concatanation if needed
+	storageDir = homeDir + "/.task-tracker-cli/"
+	tasksDir = storageDir + "tasks/"
+	configsDir = storageDir + "configs/"
+)
+
 func main() {
 	flag.Parse()
 	if len(flag.Args()) != 1 {
@@ -18,23 +28,7 @@ func main() {
 		return
 	}
 
-	// storage configuration
-	homeDir, err := os.UserHomeDir()
-	check(err)
-	storageDir := homeDir + "/.task-tracker-cli/"
-
-	_, err = os.Stat(storageDir)
-	if errors.Is(err, fs.ErrNotExist) {
-		err := os.Mkdir(storageDir, 0755)
-		check(err)
-		err = os.Mkdir(storageDir + "tasks/", 0755)
-		check(err)
-		err = os.Mkdir(storageDir + "configs/", 0755)
-		check(err)
-
-		fmt.Println("Storage created at", storageDir, "\n")
-	}
-	// --------------------------
+	configureStorage()
 
 	switch flag.Arg(0) {
 	case "create":
@@ -78,5 +72,29 @@ func readStdIn() string {
 func check(e error) {
 	if e != nil {
 		panic(e)
+	}
+}
+
+func configureStorage() {
+	configureFolder(storageDir)
+	configureFolder(tasksDir)
+	configureFolder(configsDir)
+	fmt.Println()
+}
+
+func isExists(path string) bool {
+	_, err := os.Stat(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return false
+	} else {
+		return true
+	}
+}
+
+func configureFolder(path string) {
+	if !isExists(path) {
+		err := os.Mkdir(path, 0755)
+		check(err)
+		fmt.Println(path, "created")
 	}
 }
