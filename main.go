@@ -37,7 +37,7 @@ func main() {
 		JSON, err := json.Marshal(task)
 		check(err)
 
-		f, err := os.Create(storageDir + "tasks/" + task.Name + ".json")
+		f, err := os.Create(tasksDir + task.Name + ".json")
 		check(err)
 		defer f.Close()
 
@@ -80,7 +80,7 @@ func configureStorage() {
 	configureFolder(configsDir)
 }
 
-func isExists(path string) bool {
+func isExist(path string) bool {
 	_, err := os.Stat(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false
@@ -90,7 +90,7 @@ func isExists(path string) bool {
 }
 
 func configureFolder(path string) {
-	if !isExists(path) {
+	if !isExist(path) {
 		err := os.Mkdir(path, 0755)
 		check(err)
 	}
