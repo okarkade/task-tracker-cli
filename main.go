@@ -48,7 +48,7 @@ func main() {
 		_, err = f.Write(createJSON)
 		check(err)
 	default:
-		panic("unknown argument: " + arg)
+		log.Fatal("unknown argument: " + arg)
 	}
 }
 
@@ -67,7 +67,7 @@ func readStdIn() string {
 
 func check(e error) {
 	if e != nil {
-		panic(e)
+		log.Fatal(e)
 	}
 }
 
