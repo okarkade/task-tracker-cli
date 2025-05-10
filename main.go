@@ -27,7 +27,7 @@ func main() {
 
 	configureFolder(storageDir)
 	configureFolder(tasksDir)
-	
+
 	// idPool configuration
 	switch isExist(idPoolPath) {
 	case false:
@@ -43,7 +43,7 @@ func main() {
 			log.Fatal("invalid number of arguments")
 		}
 		var task task
-		
+
 		task.ID = generateID()
 		idPool[task.ID] = nil
 
@@ -53,7 +53,7 @@ func main() {
 
 		_, err := os.Create(tasksDir + strconv.Itoa(task.ID) + ".json")
 		check(err)
-		marshalAndWrite(task, tasksDir + strconv.Itoa(task.ID) + ".json")
+		marshalAndWrite(task, tasksDir+strconv.Itoa(task.ID)+".json")
 
 		fmt.Println("Task", task.ID, "successfully created!")
 
@@ -80,7 +80,7 @@ func main() {
 
 		for id := range idPool {
 			var task task
-			readAndUnmarshal(tasksDir + strconv.Itoa(id) + ".json", &task)
+			readAndUnmarshal(tasksDir+strconv.Itoa(id)+".json", &task)
 
 			if task.Status != filter {
 				continue
@@ -89,7 +89,7 @@ func main() {
 			fmt.Println(task)
 			fmt.Println()
 		}
-		
+
 	case "mark":
 		if len(flag.Args()) != 3 {
 			log.Fatal("invalid number of arguments")
@@ -121,13 +121,13 @@ func main() {
 		}
 
 		var task task
-		readAndUnmarshal(tasksDir + strconv.Itoa(id) + ".json", &task)
+		readAndUnmarshal(tasksDir+strconv.Itoa(id)+".json", &task)
 
 		if task.Status == newStatus {
 			log.Fatal("task is already have status ", newStatus)
 		} else {
 			task.Status = newStatus
-			marshalAndWrite(&task, tasksDir + strconv.Itoa(id) + ".json")
+			marshalAndWrite(&task, tasksDir+strconv.Itoa(id)+".json")
 		}
 
 	default:
@@ -146,8 +146,8 @@ type task struct {
 
 func (t task) String() string {
 	return strconv.Itoa(t.ID) + ": " + t.Task +
-	"\nstatus: " + t.Status.String() +
-	"\ncreated at: " + t.CreatedAt
+		"\nstatus: " + t.Status.String() +
+		"\ncreated at: " + t.CreatedAt
 }
 
 type taskStatus int
@@ -159,8 +159,8 @@ const (
 )
 
 var statusName = map[taskStatus]string{
-	statusActive: "active",
-	statusDone:   "done",
+	statusActive:   "active",
+	statusDone:     "done",
 	statusInactive: "inactive",
 }
 
