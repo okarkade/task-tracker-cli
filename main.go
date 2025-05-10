@@ -55,7 +55,7 @@ func main() {
 		check(err)
 		marshalAndWrite(task, tasksDir + strconv.Itoa(task.ID) + ".json")
 
-		fmt.Println("Task successfully created!")
+		fmt.Println("Task", task.ID, "successfully created!")
 
 	case "list", "ls":
 		if len(flag.Args()) > 2 {
@@ -75,7 +75,7 @@ func main() {
 			filter = statusInactive
 
 		default:
-			log.Fatal("unknown task status: " + flag.Arg(1))
+			log.Fatal("unknown task status:", flag.Arg(1))
 		}
 
 		for id := range idPool {
@@ -89,9 +89,49 @@ func main() {
 			fmt.Println(task)
 			fmt.Println()
 		}
+		
+	case "mark":
+		if len(flag.Args()) != 3 {
+			log.Fatal("invalid number of arguments")
+		}
+
+		id, err := strconv.Atoi(flag.Arg(1))
+		if errors.Is(err, strconv.ErrRange) {
+			log.Fatal(flag.Arg(1), "is not a task id")
+		}
+
+		if !isExist(tasksDir + strconv.Itoa(id) + ".json") {
+			log.Fatal("there is no task with id", id)
+		}
+
+		var newStatus taskStatus
+
+		switch flag.Arg(2) {
+		case "active":
+			newStatus = statusActive
+
+		case "done":
+			newStatus = statusDone
+
+		case "inactive":
+			newStatus = statusInactive
+
+		default:
+			log.Fatal("unknown task status:", flag.Arg(2))
+		}
+
+		var task task
+		readAndUnmarshal(tasksDir + strconv.Itoa(id) + ".json", &task)
+
+		if task.Status == newStatus {
+			log.Fatal("task is already have status ", newStatus)
+		} else {
+			task.Status = newStatus
+			marshalAndWrite(&task, tasksDir + strconv.Itoa(id) + ".json")
+		}
 
 	default:
-		log.Fatal("unknown argument: " + flag.Arg(0))
+		log.Fatal("unknown argument:", flag.Arg(0))
 	}
 
 	marshalAndWrite(idPool, idPoolPath)
@@ -151,10 +191,11 @@ func configureFolder(path string) {
 }
 
 // pool for used ids
-// use map[int]any for convinient search for used id
+// use map[int]any for convinient search in it
 // also search in hash tables is O(1)
 var idPool = make(map[int]any)
 
+// generateID is simple search algorithm because it is not guarantied that idPool is sorted
 func generateID() int {
 	for i := 1; ; i++ {
 		_, present := idPool[i]
