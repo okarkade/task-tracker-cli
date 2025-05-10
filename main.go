@@ -39,7 +39,7 @@ func main() {
 
 	switch flag.Arg(0) {
 	case "create", "add":
-		if len(flag.Args()) > 2 {
+		if len(flag.Args()) != 2 {
 			log.Fatal("invalid number of arguments")
 		}
 		var task task
@@ -56,6 +56,40 @@ func main() {
 		marshalAndWrite(task, tasksDir + strconv.Itoa(task.ID) + ".json")
 
 		fmt.Println("Task successfully created!")
+
+	case "list", "ls":
+		if len(flag.Args()) > 2 {
+			log.Fatal("invalid number of arguments")
+		}
+
+		var filter taskStatus
+
+		switch flag.Arg(1) {
+		case "active", "":
+			filter = statusActive
+
+		case "done":
+			filter = statusDone
+
+		case "inactive":
+			filter = statusInactive
+
+		default:
+			log.Fatal("unknown task status: " + flag.Arg(1))
+		}
+
+		for id := range idPool {
+			var task task
+			readAndUnmarshal(tasksDir + strconv.Itoa(id) + ".json", &task)
+
+			if task.Status != filter {
+				continue
+			}
+
+			fmt.Println(task)
+			fmt.Println()
+		}
+
 	default:
 		log.Fatal("unknown argument: " + flag.Arg(0))
 	}
@@ -70,16 +104,24 @@ type task struct {
 	Status    taskStatus `json:"status"`
 }
 
+func (t task) String() string {
+	return strconv.Itoa(t.ID) + ": " + t.Task +
+	"\nstatus: " + t.Status.String() +
+	"\ncreated at: " + t.CreatedAt
+}
+
 type taskStatus int
 
 const (
 	statusActive taskStatus = iota
 	statusDone
+	statusInactive
 )
 
 var statusName = map[taskStatus]string{
 	statusActive: "active",
 	statusDone:   "done",
+	statusInactive: "inactive",
 }
 
 func (ts taskStatus) String() string {
