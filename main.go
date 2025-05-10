@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -9,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -18,52 +18,72 @@ var (
 
 	// slashes on the end for the easier concatanation if needed
 	storageDir = homeDir + "/.task-tracker-cli/"
-	tasksDir = storageDir + "tasks/"
-	configsDir = storageDir + "configs/"
+	tasksDir   = storageDir + "tasks/"
+	idPoolPath = tasksDir + "idPool.json"
 )
 
 func main() {
-	arg := parseArg()
+	flag.Parse()
+
 	configureFolder(storageDir)
 	configureFolder(tasksDir)
-	configureFolder(configsDir)
-
-	switch arg {
-	case "create":
-		var task task
-
-		task.Name = ask("Input name of the task")
-		task.Task = ask("Input description of the task")
-		task.CreatedAt = time.Now().Format(time.RFC1123)
-
-		JSON, err := json.Marshal(task)
+	
+	// idPool configuration
+	switch isExist(idPoolPath) {
+	case false:
+		_, err := os.Create(idPoolPath)
 		check(err)
-
-		f, err := os.Create(tasksDir + task.Name + ".json")
-		check(err)
-		defer f.Close()
-
-		_, err = f.Write(JSON)
-		check(err)
-
-		fmt.Println("\nTask successfully created!")
-	default:
-		log.Fatal("unknown argument: " + arg)
+	case true:
+		readAndUnmarshal(idPoolPath, &idPool)
 	}
+
+	switch flag.Arg(0) {
+	case "create", "add":
+		if len(flag.Args()) > 2 {
+			log.Fatal("invalid number of arguments")
+		}
+		var task task
+		
+		task.ID = generateID()
+		idPool[task.ID] = nil
+
+		task.Task = flag.Arg(1)
+		task.CreatedAt = time.Now().Format(time.RFC1123)
+		task.Status = statusActive
+
+		_, err := os.Create(tasksDir + strconv.Itoa(task.ID) + ".json")
+		check(err)
+		marshalAndWrite(task, tasksDir + strconv.Itoa(task.ID) + ".json")
+
+		fmt.Println("Task successfully created!")
+	default:
+		log.Fatal("unknown argument: " + flag.Arg(0))
+	}
+
+	marshalAndWrite(idPool, idPoolPath)
 }
 
 type task struct {
-	Name      string `json:"name"`
-	Task      string `json:"task"`
-	CreatedAt string `json:"createdAt"`
+	ID        int        `json:"id"`
+	Task      string     `json:"task"`
+	CreatedAt string     `json:"createdAt"`
+	Status    taskStatus `json:"status"`
 }
 
-func ask(prompt string) string {
-	fmt.Print(prompt + ": ")
-	a := bufio.NewScanner(os.Stdin)
-	a.Scan()
-	check(a.Err())
-	return a.Text()
+type taskStatus int
+
+const (
+	statusActive taskStatus = iota
+	statusDone
+)
+
+var statusName = map[taskStatus]string{
+	statusActive: "active",
+	statusDone:   "done",
+}
+
+func (ts taskStatus) String() string {
+	return statusName[ts]
 }
 
 func check(e error) {
@@ -88,10 +108,30 @@ func configureFolder(path string) {
 	}
 }
 
-func parseArg() string {
-	flag.Parse()
-	if len(flag.Args()) != 1 {
-		log.Fatal("Invalid number of arguments")
+// pool for used ids
+// use map[int]any for convinient search for used id
+// also search in hash tables is O(1)
+var idPool = make(map[int]any)
+
+func generateID() int {
+	for i := 1; ; i++ {
+		_, present := idPool[i]
+		if !present {
+			return i
+		}
 	}
-	return flag.Arg(0)
+}
+
+func marshalAndWrite(v any, path string) {
+	JSON, err := json.Marshal(v)
+	check(err)
+
+	os.WriteFile(path, JSON, 0755)
+}
+
+func readAndUnmarshal(path string, v any) {
+	JSON, err := os.ReadFile(path)
+	check(err)
+
+	json.Unmarshal(JSON, v)
 }
