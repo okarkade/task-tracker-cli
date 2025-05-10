@@ -24,7 +24,9 @@ var (
 
 func main() {
 	arg := parseArg()
-	configureStorage()
+	configureFolder(storageDir)
+	configureFolder(tasksDir)
+	configureFolder(configsDir)
 
 	switch arg {
 	case "create":
@@ -58,26 +60,16 @@ type task struct {
 
 func ask(prompt string) string {
 	fmt.Print(prompt + ": ")
-	return readStdIn()
-}
-
-func readStdIn() string {
-	s := bufio.NewScanner(os.Stdin)
-	s.Scan()
-	check(s.Err())
-	return s.Text()
+	a := bufio.NewScanner(os.Stdin)
+	a.Scan()
+	check(a.Err())
+	return a.Text()
 }
 
 func check(e error) {
 	if e != nil {
 		log.Fatal(e)
 	}
-}
-
-func configureStorage() {
-	configureFolder(storageDir)
-	configureFolder(tasksDir)
-	configureFolder(configsDir)
 }
 
 func isExist(path string) bool {
