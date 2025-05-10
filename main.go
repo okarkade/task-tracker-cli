@@ -75,7 +75,7 @@ func main() {
 			filter = statusInactive
 
 		default:
-			log.Fatal("unknown task status:", flag.Arg(1))
+			log.Fatal("unknown task status: ", flag.Arg(1))
 		}
 
 		for id := range idPool {
@@ -96,12 +96,12 @@ func main() {
 		}
 
 		id, err := strconv.Atoi(flag.Arg(1))
-		if errors.Is(err, strconv.ErrRange) {
-			log.Fatal(flag.Arg(1), "is not a task id")
+		if err != nil {
+			log.Fatal(flag.Arg(1), " is not a task id")
 		}
 
 		if !isExist(tasksDir + strconv.Itoa(id) + ".json") {
-			log.Fatal("there is no task with id", id)
+			log.Fatal("there is no task with id ", id)
 		}
 
 		var newStatus taskStatus
@@ -117,7 +117,7 @@ func main() {
 			newStatus = statusInactive
 
 		default:
-			log.Fatal("unknown task status:", flag.Arg(2))
+			log.Fatal("unknown task status: ", flag.Arg(2))
 		}
 
 		var task task
@@ -131,7 +131,7 @@ func main() {
 		}
 
 	default:
-		log.Fatal("unknown argument:", flag.Arg(0))
+		log.Fatal("unknown argument: ", flag.Arg(0))
 	}
 
 	marshalAndWrite(idPool, idPoolPath)
